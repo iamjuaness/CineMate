@@ -1,0 +1,336 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* --------- Cinematic Theme Variables --------- */
+:root {
+  --background: oklch(0.13 0.03 250); /* navy más oscuro - mejora contraste */
+  --foreground: oklch(0.98 0.08 3);   /* dorado puro más claro */
+  --card: oklch(0.20 0.04 240);       /* azul navy para cards */
+  --card-foreground: oklch(1 0 0);    /* blanco total para texto en cards */
+  --primary: oklch(71.629% 0.0584 42.066);        /* dorado más intenso */
+  --primary-foreground: oklch(0.15 0.09 250); /* navy profundo */
+  --secondary: oklch(0.25 0.09 13);   /* vino oscuro con más claridad */
+  --secondary-foreground: oklch(0% 0 0); /* blanco total */
+  --accent: oklch(0.77 0.19 32);      /* rojo led claro */
+  --accent-foreground: oklch(1 0 0);  /* blanco total para tags y botones */
+  --muted: oklch(0.22 0.02 235);
+  --muted-foreground: oklch(0.7 0.015 30);
+
+  --border: oklch(0.25 0.02 250);
+  --input: oklch(0.2 0.025 250);
+  --ring: oklch(0.95 0.025 89);
+  --radius: 0.85rem;
+
+  --sidebar: oklch(0.15 0.03 250);
+  --sidebar-foreground: oklch(0.98 0.04 92);
+  --sidebar-primary: oklch(0.85 0.18 35);
+  --sidebar-primary-foreground: oklch(0.15 0.03 250);
+  --sidebar-accent: oklch(0.57 0.18 32);
+  --sidebar-accent-foreground: oklch(0.15 0.03 250);
+  --sidebar-border: oklch(0.22 0.02 235);
+  --sidebar-ring: oklch(0.95 0.025 89);
+
+  --shadow: 0 8px 40px 0 oklch(0.1 0.02 230 / 45%);
+  --shadow-card: 0 3px 40px 0 oklch(0.13 0.03 250 / 64%);
+
+  /* Chart colors (inspirados en posters clásicos) */
+  --chart-1: oklch(0.98 0.15 36); /* dorado */
+  --chart-2: oklch(0.6 0.21 24); /* vino */
+  --chart-3: oklch(0.5 0.22 32); /* rojo */
+  --chart-4: oklch(0.28 0.13 270); /* azul-violeta */
+  --chart-5: oklch(0.85 0.18 35); /* dorado extra */
+
+  --degradado-cine: linear-gradient(
+    120deg,
+    oklch(0.12 0.03 250) 0%,
+    /* azul navy muy oscuro */ oklch(0.24 0.09 260) 40%,
+    /* azul-violeta brillo leve */ oklch(0.73 0.14 82) 100%
+      /* dorado suave en el fondo */
+  );
+}
+
+body {
+  background: var(--degradado-cine);
+  color: var(--foreground);
+  min-height: 100vh;
+}
+
+.dark {
+  --foreground: oklch(0.99 0.04 92);
+  --background: oklch(0.15 0.08 250);    /* navy oscuro pero no negro, mejora legibilidad */
+  --foreground: oklch(0.99 0.08 3);      /* dorado claro puro */
+  --card: oklch(0.22 0.03 250);          /* navy claro para cards destacadas */
+  --card-foreground: oklch(1 0 0);       /* blanco total */
+  --primary: oklch(1 0.17 27);           /* dorado puro */
+  --primary-foreground: oklch(0.13 0.12 255); /* muy oscuro */
+  --secondary: oklch(55.804% 0.25248 301.695);      /* vinotinto claro */
+  --secondary-foreground: oklch(72.926% 0.03553 17.87);  /* blanco */
+  --accent: oklch(0.78 0.22 28);         /* rojo neón más claro */
+  --accent-foreground: oklch(1 0 0);     /* blanco */
+
+  --muted: oklch(0.19 0.01 230);
+  --muted-foreground: oklch(0.78 0.01 44);
+
+  --border: oklch(0.15 0.02 250);
+  --input: oklch(0.13 0.02 255);
+  --ring: oklch(0.98 0.035 92);
+
+  --sidebar: oklch(0.16 0.03 260);
+  --sidebar-foreground: oklch(0.98 0.04 92);
+  --sidebar-primary: oklch(0.55 0.18 32);
+  --sidebar-primary-foreground: oklch(0.18 0.03 250);
+  --sidebar-accent: oklch(0.88 0.18 38);
+  --sidebar-accent-foreground: oklch(0.18 0.03 250);
+
+  --shadow: 0 8px 50px 0 oklch(0.1 0.04 235 / 70%);
+  --shadow-card: 0 4px 40px 0 oklch(0.13 0.04 264 / 74%);
+
+  --degradado-cine: linear-gradient(
+    120deg,
+    oklch(10.909% 0.03354 245.075) 0%,
+    oklch(0.23 0.11 280) 80%,
+    oklch(0.33 0.11 32) 100% /* dorado suave en el fondo */
+  );
+}
+
+body {
+  /* Este fondo se mostrará SIEMPRE, excepto que lo sobreescriba una clase más específica */
+  background: linear-gradient(135deg,
+    oklch(0.17 0.03 250),
+    oklch(0.15 0.02 285) 35%,
+    oklch(0.23 0.09 23) 100%
+  );
+  min-height: 100vh;
+  color: var(--foreground);
+}
+
+.dark body, body.dark {
+  background: linear-gradient(135deg,
+    oklch(10.909% 0.03354 245.075) 0%,
+    oklch(0.23 0.11 280) 80%,
+    oklch(0.33 0.11 32) 100%
+  );
+  color: var(--foreground);
+}
+
+
+/* --------- Fuente moderna tipo cine --------- */
+@theme inline {
+  --font-sans: "Montserrat", "Oswald", "Geist", Arial, sans-serif;
+  --font-mono: "Fira Mono", "Geist Mono", monospace;
+  /* Color mapping for tailwind utilities */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--card); /* merge with card for blur */
+  --color-popover-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: oklch(0.62 0.23 29.7);
+  --color-destructive-foreground: oklch(0.99 0.04 92);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 3px);
+  --radius-md: calc(var(--radius) - 1px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 8px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* ---------- Base Layer ---------- */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  body {
+    font-family: var(--font-sans);
+    background: var(--background);
+    color: var(--foreground);
+    min-height: 100vh;
+    box-shadow: inset 0 0 180px 0 oklch(0.1 0.02 200 / 54%);
+    @apply overflow-x-hidden;
+  }
+}
+
+/* ---------- Cine Components ---------- */
+
+/* Cards (película, showtime, usuario) */
+.card-cine {
+  background: var(--card);              /* fondo navy */
+  color: var(--card-foreground);        /* texto siempre blanco */
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  @apply p-6 relative transition-transform duration-200;
+}
+
+.card-cine:hover {
+  transform: translateY(-6px) scale(1.023);
+  box-shadow: 0 16px 40px 0 oklch(0.85 0.18 35 / 32%);
+}
+
+/* Posters de película */
+.poster-cine {
+  border-radius: var(--radius-xl);
+  box-shadow: 0 2px 28px 0 oklch(0 0 0 / 50%);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    180deg,
+    transparent 60%,
+    oklch(0.13 0.03 250) 100%
+  );
+  @apply aspect-[2/3];
+}
+.poster-cine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: 0 8px 32px oklch(0.13 0.07 29 / 88%);
+  background: linear-gradient(
+    180deg,
+    transparent 66%,
+    oklch(0.13 0.03 250) 100%
+  );
+}
+
+/* Anula la animación del contenido del select (Radix/shadcn/ui) */
+[data-state="open"], .radix-select-content {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+/* Hero para estrenos destacados */
+.hero-cine {
+  background: linear-gradient(110deg, var(--primary) 10%, var(--background) 90%);
+  color: var(--primary-foreground);
+}
+
+
+/* Botones destacados */
+.btn-cine {
+  @apply px-8 py-2 rounded-xl font-bold tracking-wide;
+  background: var(--primary);
+  color: var(--primary-foreground);     /* navy puro para contraste alto */
+  box-shadow: 0 3px 24px 0 oklch(60.76% 0.10632 39.946 / 0.44);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-cine:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);      /* (Blanco) sobre rojo led */
+  transform: scale(1.07);
+  box-shadow: 0 6px 28px 0 oklch(0.57 0.14 12 / 65%);
+}
+
+
+/* Sidebar/menus */
+.sidebar-cine {
+  background: var(--sidebar);
+  color: var(--sidebar-foreground);
+  border-right: 2px solid var(--sidebar-border);
+  box-shadow: 8px 0 32px -12px oklch(0.1 0.02 200 / 22%);
+  @apply py-8 px-3 w-72 min-h-screen;
+}
+
+.sidebar-cine .active {
+  background: var(--sidebar-primary);
+  color: var(--sidebar-primary-foreground);
+  @apply font-bold shadow-lg rounded-lg;
+}
+
+.sidebar-cine .accent {
+  color: var(--sidebar-accent);
+}
+
+@layer base {
+  h1,
+  .title-cine {
+    font-family: "Oswald", "Montserrat", var(--font-sans);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    @apply text-4xl tracking-wider font-bold text-primary mt-6 mb-3 drop-shadow;
+  }
+  h2,
+  .subtitle-cine {
+    font-family: "Oswald", "Montserrat", var(--font-sans);
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+    @apply text-2xl text-secondary mb-2 font-bold;
+  }
+}
+
+.cine-tag {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  @apply px-3 py-1 rounded-lg shadow-md font-bold text-xs mr-2;
+  letter-spacing: .05em;
+}
+
+
+.cine-glow {
+  box-shadow: 0 0 12px 1px rgba(255, 157, 121, 0.66),
+    0 0 2px 1px oklch(82.038% 0.06946 29.694 / 0.34);
+}
+
+@media (max-width: 900px) {
+  .sidebar-cine {
+    width: 100vw;
+    min-height: 0;
+    position: sticky;
+    top: 0;
+  }
+  .hero-cine {
+    flex-direction: column;
+    min-height: 260px;
+  }
+}
+
+.text-muted-foreground {
+  color: var(--secondary-foreground); /* blanco */
+  opacity: .85;
+}
+
+.title-cine, h1 {
+  color: var(--primary); /* dorado intenso */
+  text-shadow: 0 2px 18px oklch(0.2 0.03 250 / 34%);
+}
+.subtitle-cine, h2 {
+  color: var(--secondary);
+}
+
+
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

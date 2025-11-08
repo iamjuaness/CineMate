@@ -1,0 +1,32 @@
+-- Función para crear automáticamente un perfil cuando se registra un usuario
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, email, full_name)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data ->> 'full_name', null)
+  )
+  on conflict (id) do nothing;
+
+  -- Crear preferencias de usuario por defecto
+  insert into public.user_preferences (user_id)
+  values (new.id)
+  on conflict (user_id) do nothing;
+
+  return new;
+end;
+$$;
+
+-- Trigger para ejecutar la función cuando se crea un usuario
+drop trigger if exists on_auth_user_created on auth.users;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row
+  execute function public.handle_new_user();
