@@ -6,6 +6,9 @@ import { Card } from "@/components/ui/card"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Clock, MapPin } from "lucide-react"
+import { parseISO, format } from "date-fns"
+import { toZonedTime } from "date-fns-tz"
+import { es } from "date-fns/locale"
 
 export default async function ComprarBoletoPage({
   params,
@@ -14,10 +17,12 @@ export default async function ComprarBoletoPage({
 }) {
   const supabase = await createClient()
   const { showtimeId } = await params
+  const TIMEZONE = "America/Bogota"
 
   const {
     data: { user },
   } = await supabase.auth.getUser()
+  
   if (!user) {
     redirect("/auth/login")
   }
@@ -39,6 +44,10 @@ export default async function ComprarBoletoPage({
     notFound()
   }
 
+  // Parsear y convertir el datetime a hora de Colombia
+  const showtimeUTC = parseISO(showtime.show_datetime)
+  const showtimeColombia = toZonedTime(showtimeUTC, TIMEZONE)
+
   return (
     <div className="min-h-svh bg-background">
       <NavBar />
@@ -51,7 +60,7 @@ export default async function ComprarBoletoPage({
             <div className="mb-4 flex gap-4">
               <div className="relative h-32 w-24 flex-shrink-0 overflow-hidden rounded">
                 <Image
-                  src={showtime.movies.poster_url || "/placeholder.svg?height=600&width=400" || "/placeholder.svg"}
+                  src={showtime.movies.poster_url || "/placeholder.svg?height=600&width=400"}
                   alt={showtime.movies.title}
                   fill
                   className="object-cover"
@@ -86,19 +95,16 @@ export default async function ComprarBoletoPage({
 
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-muted-foreground" />
-                <p className="font-medium">
-                  {new Date(showtime.show_date).toLocaleDateString("es-ES", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
+                <p className="font-medium capitalize">
+                  {format(showtimeColombia, "EEEE, d 'de' MMMM 'de' yyyy", {
+                    locale: es,
                   })}
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
                 <Clock className="h-5 w-5 text-muted-foreground" />
-                <p className="font-medium">{showtime.show_time.substring(0, 5)}</p>
+                <p className="font-medium">{format(showtimeColombia, "HH:mm")}</p>
               </div>
 
               <div className="flex items-center justify-between border-t pt-3">

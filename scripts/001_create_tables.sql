@@ -42,8 +42,7 @@ create table if not exists public.showtimes (
   id uuid primary key default gen_random_uuid(),
   movie_id uuid not null references public.movies(id) on delete cascade,
   location_id uuid not null references public.locations(id) on delete cascade,
-  show_date date not null,
-  show_time time not null,
+  show_datetime timestamp with time zone not null,
   available_seats integer not null,
   total_seats integer not null,
   -- Cambiado decimal a numeric para compatibilidad con PostgreSQL

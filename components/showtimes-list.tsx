@@ -3,6 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import type { Showtime } from "@/lib/types";
+import { parseISO, format, isBefore } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
+import { es } from "date-fns/locale";
 
 interface ShowtimesListProps {
   showtimes: Showtime[];
@@ -10,36 +13,37 @@ interface ShowtimesListProps {
 
 export function ShowtimesList({ showtimes }: ShowtimesListProps) {
   const router = useRouter();
-
-  // Obtener fecha y hora actual en Colombia
-  const nowColombia = new Date(
-    new Date().toLocaleString("en-US", { timeZone: "America/Bogota" })
-  );
+  const TIMEZONE = "America/Bogota";
+  const nowUTC = new Date();
 
   // Agrupar por fecha
   const showtimesByDate = showtimes.reduce((acc: any, showtime: Showtime) => {
-    const date = showtime.show_date;
-    if (!acc[date]) {
-      acc[date] = [];
+    // Parsear datetime que YA viene con timezone correcto de la BD
+    const showtimeUTC = parseISO(showtime.show_datetime);
+    const showtimeColombia = toZonedTime(showtimeUTC, TIMEZONE);
+    const dateKey = format(showtimeColombia, "yyyy-MM-dd");
+    
+    if (!acc[dateKey]) {
+      acc[dateKey] = [];
     }
-    acc[date].push(showtime);
+    acc[dateKey].push({
+      ...showtime,
+      utc: showtimeUTC,
+      colombia: showtimeColombia,
+    });
     return acc;
   }, {});
 
   return (
     <div className="space-y-3">
-      {(Object.entries(showtimesByDate) as [string, Showtime[]][]).map(
+      {(Object.entries(showtimesByDate) as [string, any[]][]).map(
         ([date, times]) => {
-          // Parsear la fecha correctamente sin conversión UTC
-          // YYYY-MM-DD → parsearlo como fecha local de Colombia
-          const [year, month, day] = date.split("-").map(Number);
-          const dateObj = new Date(year, month - 1, day); // Mes es 0-indexed
-
-          const formattedDate = dateObj.toLocaleDateString("es-CO", {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-          });
+          const firstShowtime = times[0];
+          const formattedDate = format(
+            firstShowtime.colombia,
+            "EEEE, d 'de' MMMM",
+            { locale: es }
+          );
 
           return (
             <div key={date}>
@@ -47,34 +51,10 @@ export function ShowtimesList({ showtimes }: ShowtimesListProps) {
                 {formattedDate}
               </p>
               <div className="flex flex-wrap gap-2">
-                {times.map((showtime: Showtime) => {
-                  // Crear fecha/hora completa en Colombia
-                  // YYYY-MM-DD + HH:mm:ss → como fecha local
-                  const [showYear, showMonth, showDay] = showtime.show_date
-                    .split("-")
-                    .map(Number);
-                  const [hours, minutes] = showtime.show_time
-                    .split(":")
-                    .map(Number);
-
-                  const showtimeDate = new Date(
-                    showYear,
-                    showMonth - 1,
-                    showDay,
-                    hours,
-                    minutes
-                  );
-
-                  // Verificar si está en el pasado
-                  const isPast = showtimeDate < nowColombia;
+                {times.map((showtime: any) => {
+                  const isPast = isBefore(showtime.utc, nowUTC);
                   const isSoldOut = showtime.available_seats === 0;
-
-                  // Formatear hora
-                  const formattedHour = showtimeDate.toLocaleTimeString("es-CO", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: false,
-                  });
+                  const formattedHour = format(showtime.colombia, "HH:mm");
 
                   return (
                     <Button

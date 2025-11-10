@@ -181,42 +181,85 @@ ON CONFLICT DO NOTHING;
 
 
 -- Nota: Las funciones (showtimes) se crearán dinámicamente según las ubicaciones
--- Aquí hay un ejemplo de cómo crear funciones para las próximas dos semanas
-do $$
-declare
-  movie_rec record;
-  location_rec record;
-  current_date date := current_date;
-  days_ahead integer;
-begin
-  for movie_rec in select id from public.movies loop
-    for location_rec in select id from public.locations loop
-      -- Crear funciones para los próximos 7 días
-      for days_ahead in 0..7 loop
-        -- Función de tarde (3:00 PM)
-        insert into public.showtimes (movie_id, location_id, show_date, show_time, available_seats, total_seats, price)
-        values (
+-- Crear funciones con TIMESTAMPTZ
+DO $$
+DECLARE
+  movie_rec RECORD;
+  location_rec RECORD;
+  days_ahead INTEGER;
+  colombia_datetime TIMESTAMPTZ;
+BEGIN
+  FOR movie_rec IN SELECT id FROM public.movies LOOP
+    FOR location_rec IN SELECT id FROM public.locations LOOP
+      FOR days_ahead IN 0..7 LOOP
+        
+        -- Función de las 3:00 PM Colombia
+        colombia_datetime := (
+          (CURRENT_DATE + days_ahead)::TEXT || ' 15:00:00'
+        )::TIMESTAMP AT TIME ZONE 'America/Bogota';
+        
+        INSERT INTO public.showtimes (
+          movie_id, 
+          location_id, 
+          show_datetime,
+          available_seats, 
+          total_seats, 
+          price
+        )
+        VALUES (
           movie_rec.id,
           location_rec.id,
-          current_date + days_ahead,
-          '15:00',
+          colombia_datetime,
           80,
           80,
           5000
         );
         
-        -- Función de noche (7:00 PM)
-        insert into public.showtimes (movie_id, location_id, show_date, show_time, available_seats, total_seats, price)
-        values (
+        -- Función de las 7:00 PM Colombia
+        colombia_datetime := (
+          (CURRENT_DATE + days_ahead)::TEXT || ' 19:00:00'
+        )::TIMESTAMP AT TIME ZONE 'America/Bogota';
+        
+        INSERT INTO public.showtimes (
+          movie_id, 
+          location_id, 
+          show_datetime,
+          available_seats, 
+          total_seats, 
+          price
+        )
+        VALUES (
           movie_rec.id,
           location_rec.id,
-          current_date + days_ahead,
-          '19:00',
+          colombia_datetime,
           80,
           80,
           8000
         );
-      end loop;
-    end loop;
-  end loop;
-end $$;
+        
+        -- Función de las 9:30 PM Colombia
+        colombia_datetime := (
+          (CURRENT_DATE + days_ahead)::TEXT || ' 21:30:00'
+        )::TIMESTAMP AT TIME ZONE 'America/Bogota';
+        
+        INSERT INTO public.showtimes (
+          movie_id, 
+          location_id, 
+          show_datetime,
+          available_seats, 
+          total_seats, 
+          price
+        )
+        VALUES (
+          movie_rec.id,
+          location_rec.id,
+          colombia_datetime,
+          80,
+          80,
+          9000
+        );
+        
+      END LOOP;
+    END LOOP;
+  END LOOP;
+END $$;

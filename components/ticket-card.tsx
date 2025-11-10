@@ -27,7 +27,7 @@ export function TicketCard({ ticket, isPast }: TicketCardProps) {
   const location = ticket.showtimes.locations
 
   // URL para validación del ticket
-  const validationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://cinemate.vercel.app'}/validar-ticket/${ticket.qr_code}`
+  const validationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://cinemateuq.vercel.app'}/validar-ticket/${ticket.qr_code}`
 
   const downloadQR = () => {
     const svg = document.getElementById(`qr-${ticket.id}`)

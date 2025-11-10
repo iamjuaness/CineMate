@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Clock, Star, Calendar, MapPin } from "lucide-react";
 import { ShowtimesList } from "@/components/showtimes-list";
 import { MovieActions } from "@/components/movie-actions";
+import { parseISO, isBefore } from "date-fns";
 
 export default async function PeliculaPage({
   params,
@@ -19,6 +20,7 @@ export default async function PeliculaPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  
   if (!user) {
     redirect("/auth/login");
   }
@@ -34,31 +36,27 @@ export default async function PeliculaPage({
     notFound();
   }
 
-  const now = new Date();
-
-  const today = now.toISOString().slice(0, 10); // "2025-11-08"
-  const timeNow = now.toTimeString().slice(0, 8); // "14:52:01"
+  // Hora actual en UTC para comparaciones
+  const nowUTC = new Date();
 
   // Obtener funciones disponibles agrupadas por ubicación
   const { data: rawShowtimes } = await supabase
     .from("showtimes")
     .select(
       `
-    *,
-    locations(*)
-  `
+      *,
+      locations(*)
+    `
     )
     .eq("movie_id", id)
-    .gte("show_date", today)
-    .order("show_date", { ascending: true })
-    .order("show_time", { ascending: true });
+    .gte("show_datetime", nowUTC.toISOString()) // Comparar con datetime completo
+    .order("show_datetime", { ascending: true });
 
-  const showtimes = rawShowtimes!.filter((showtime) => {
-    if (showtime.show_date > today) return true;
-    if (showtime.show_date < today) return false;
-    // Es hoy: compara por hora (ambos valores son string tipo "HH:mm:ss")
-    return showtime.show_time >= timeNow;
-  });
+  // Filtrar funciones que no han pasado (doble verificación en cliente)
+  const showtimes = rawShowtimes?.filter((showtime) => {
+    const showtimeUTC = parseISO(showtime.show_datetime);
+    return !isBefore(showtimeUTC, nowUTC);
+  }) || [];
 
   // Verificar si está en watchlist o visto
   const { data: watchlistItem } = await supabase
@@ -76,7 +74,7 @@ export default async function PeliculaPage({
     .single();
 
   // Agrupar funciones por ubicación
-  const showtimesByLocation = showtimes?.reduce((acc: any, showtime: any) => {
+  const showtimesByLocation = showtimes.reduce((acc: any, showtime: any) => {
     const locationId = showtime.location_id;
     if (!acc[locationId]) {
       acc[locationId] = {
@@ -190,9 +188,6 @@ export default async function PeliculaPage({
                         </div>
                       </div>
                       <ShowtimesList showtimes={item.showtimes} />
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Horario local: {new Date().toLocaleString("es-ES")}
-                      </p>
                     </Card>
                   ))}
                 </div>

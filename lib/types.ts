@@ -37,14 +37,11 @@ export interface Showtime {
   id: string
   movie_id: string
   location_id: string
-  show_date: string
-  show_time: string
+  show_datetime: string
   available_seats: number
   total_seats: number
   price: number
   created_at: string
-  movies?: Movie
-  locations?: Location
 }
 
 export interface Ticket {

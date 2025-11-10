@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Calendar, Clock, MapPin, TicketIcon, CheckCircle, XCircle } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { parseISO, isBefore, format } from "date-fns"
+import { toZonedTime } from "date-fns-tz"
+import { es } from "date-fns/locale"
 
 interface PageProps {
   params: Promise<{
@@ -15,6 +18,7 @@ interface PageProps {
 export default async function ValidateTicketPage({ params }: PageProps) {
   const { qrCode } = await params
   const supabase = await createClient()
+  const TIMEZONE = "America/Bogota"
 
   // Buscar el ticket con el código QR
   const { data: ticket, error } = await supabase
@@ -50,18 +54,18 @@ export default async function ValidateTicketPage({ params }: PageProps) {
   const movie = ticket.showtimes.movies
   const location = ticket.showtimes.locations
   
-  // Parsear fecha correctamente sin offset UTC
-  const [year, month, day] = ticket.showtimes.show_date.split("-").map(Number)
-  const [hours, minutes] = ticket.showtimes.show_time.split(":").map(Number)
-  const showDateTime = new Date(year, month - 1, day, hours, minutes)
+  // Parsear el show_datetime que viene con timezone desde la BD
+  const showtimeUTC = parseISO(ticket.showtimes.show_datetime)
   
-  // Fecha actual en Colombia
-  const nowColombia = new Date(
-    new Date().toLocaleString("en-US", { timeZone: "America/Bogota" })
-  )
+  // Obtener hora actual
+  const nowUTC = new Date()
   
-  const isPast = showDateTime < nowColombia
+  // Verificar si está en el pasado
+  const isPast = isBefore(showtimeUTC, nowUTC)
   const isValid = ticket.status === "active" && !isPast
+  
+  // Convertir a hora de Colombia para mostrar
+  const showtimeColombia = toZonedTime(showtimeUTC, TIMEZONE)
 
   return (
     <div className="container mx-auto max-w-3xl py-10">
@@ -128,11 +132,8 @@ export default async function ValidateTicketPage({ params }: PageProps) {
                 <div>
                   <p className="text-sm text-muted-foreground">Fecha</p>
                   <p className="font-medium capitalize">
-                    {showDateTime.toLocaleDateString("es-CO", {
-                      weekday: "long",
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
+                    {format(showtimeColombia, "EEEE, d 'de' MMMM 'de' yyyy", {
+                      locale: es,
                     })}
                   </p>
                 </div>
@@ -143,11 +144,7 @@ export default async function ValidateTicketPage({ params }: PageProps) {
                 <div>
                   <p className="text-sm text-muted-foreground">Hora</p>
                   <p className="font-medium">
-                    {showDateTime.toLocaleTimeString("es-CO", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: false,
-                    })}
+                    {format(showtimeColombia, "HH:mm")}
                   </p>
                 </div>
               </div>
