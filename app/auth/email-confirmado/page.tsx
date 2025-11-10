@@ -16,9 +16,17 @@ export default function EmailConfirmadoPage() {
     width: 0,
     height: 0,
   })
+  const [mounted, setMounted] = useState(false)
+
+  // Marcar como montado
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Obtener tamaño de ventana para el confetti
   useEffect(() => {
+    if (!mounted) return
+
     const handleResize = () => {
       setWindowSize({
         width: window.innerWidth,
@@ -29,10 +37,12 @@ export default function EmailConfirmadoPage() {
     handleResize()
     window.addEventListener("resize", handleResize)
     return () => window.removeEventListener("resize", handleResize)
-  }, [])
+  }, [mounted])
 
   // Countdown y redirección
   useEffect(() => {
+    if (!mounted) return
+
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -53,11 +63,16 @@ export default function EmailConfirmadoPage() {
       clearInterval(timer)
       clearTimeout(confettiTimer)
     }
-  }, [router])
+  }, [router, mounted])
+
+  // No renderizar hasta que esté montado (evita hydration mismatch)
+  if (!mounted) {
+    return null
+  }
 
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      {showConfetti && (
+      {showConfetti && windowSize.width > 0 && (
         <Confetti
           width={windowSize.width}
           height={windowSize.height}
