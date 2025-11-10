@@ -52,7 +52,7 @@ export async function middleware(request: NextRequest) {
   // Redirigir a home si está autenticado y trata de acceder a login/register
   if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register')) {
     const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = '/'
+    redirectUrl.pathname = '/cartelera'
     return NextResponse.redirect(redirectUrl)
   }
 

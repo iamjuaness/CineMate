@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { NavBar } from "@/components/nav-bar"
 import { TicketCard } from "@/components/ticket-card"
 import { Card } from "@/components/ui/card"
+import { parseISO, isBefore } from "date-fns"
 
 export default async function MisBoletosPage() {
   const supabase = await createClient()
@@ -10,6 +11,7 @@ export default async function MisBoletosPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser()
+  
   if (!user) {
     redirect("/auth/login")
   }
@@ -30,18 +32,28 @@ export default async function MisBoletosPage() {
     .eq("user_id", user.id)
     .order("purchase_date", { ascending: false })
 
+  // Hora actual en UTC
+  const nowUTC = new Date()
+
   // Separar boletos activos y pasados
-  const now = new Date()
   const activeTickets = tickets?.filter((ticket) => {
     if (!ticket.showtimes) return false
-    const showDateTime = new Date(`${ticket.showtimes.show_date}T${ticket.showtimes.show_time}`)
-    return showDateTime > now && ticket.status === "active"
+    
+    // Parsear show_datetime que viene con timezone desde la BD
+    const showtimeUTC = parseISO(ticket.showtimes.show_datetime)
+    
+    // Verificar si no ha pasado y está activo
+    return !isBefore(showtimeUTC, nowUTC) && ticket.status === "active"
   })
 
   const pastTickets = tickets?.filter((ticket) => {
     if (!ticket.showtimes) return false
-    const showDateTime = new Date(`${ticket.showtimes.show_date}T${ticket.showtimes.show_time}`)
-    return showDateTime <= now || ticket.status !== "active"
+    
+    // Parsear show_datetime
+    const showtimeUTC = parseISO(ticket.showtimes.show_datetime)
+    
+    // Verificar si ya pasó o no está activo
+    return isBefore(showtimeUTC, nowUTC) || ticket.status !== "active"
   })
 
   return (

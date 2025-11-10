@@ -6,11 +6,11 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Settings, Sparkles } from "lucide-react"
-import { getRecommendations } from "@/lib/recommendations"
 
 export default async function RecomendacionesPage() {
   const supabase = await createClient()
 
+  // Autenticación
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -18,17 +18,62 @@ export default async function RecomendacionesPage() {
     redirect("/auth/login")
   }
 
-  // Obtener preferencias del usuario
+  // Preferencias
   const { data: preferences } = await supabase
     .from("user_preferences")
-    .select("*, locations(name)")
+    .select("*, locations(name, id)")
     .eq("user_id", user.id)
     .maybeSingle()
 
-  // Obtener recomendaciones
-  const recommendations = await getRecommendations(user.id, 12)
+  // Recuperar géneros y ubicación preferida
+  const favoriteGenres = preferences?.favorite_genres || []
+  const locationPref = preferences?.locations
 
-  const hasPreferences = preferences?.favorite_genres && preferences.favorite_genres.length > 0
+  // Buscar películas que tienen al menos un género en favorito y, si hay ubicación preferida, que tengan funciones en esa ubicación:
+  let filters = []
+  if (favoriteGenres.length > 0) {
+    filters.push(`genre.cs.{${favoriteGenres.map((g: string) => `"${g}"`).join(",")}}`)
+  }
+
+  let moviesQuery = supabase
+    .from("movies")
+    .select(
+      `
+      *,
+      showtimes:showtimes!inner(
+        id,
+        location_id,
+        locations (
+          id,
+          name
+        )
+      )
+      `
+    )
+    .order("release_date", { ascending: false })
+
+  // Filtrar por géneros (ARRAY column search)
+  if (filters.length > 0) {
+    moviesQuery = moviesQuery.or(filters.join(","))
+  }
+
+  // Fetch movies
+  let { data: movies } = await moviesQuery
+
+  // Si hay ubicación preferida, filtrarla a nivel JS (en SQL sería con otro join/filter anidado)
+  if (locationPref) {
+    movies = movies?.filter((movie: any) =>
+      movie.showtimes.some((st: any) => st.locations?.id === locationPref.id)
+    )
+  }
+
+  // Quitar duplicados por id
+  movies = movies?.filter(
+    (movie: any, index: number, self: any[]) =>
+      self.findIndex((m: any) => m.id === movie.id) === index
+  )
+
+  const hasPreferences = favoriteGenres.length > 0
 
   return (
     <div className="min-h-svh bg-background">
@@ -54,24 +99,24 @@ export default async function RecomendacionesPage() {
           </Button>
         </div>
 
-        {hasPreferences && preferences.favorite_genres.length > 0 && (
+        {hasPreferences && (
           <Card className="mb-6 p-4">
             <p className="text-sm text-muted-foreground">
               Basado en tus géneros favoritos:{" "}
-              <span className="font-medium text-foreground">{preferences.favorite_genres.join(", ")}</span>
-              {preferences.locations && (
+              <span className="font-medium text-foreground">{favoriteGenres.join(", ")}</span>
+              {locationPref && (
                 <>
                   {" "}
                   | Ubicación preferida:{" "}
-                  <span className="font-medium text-foreground">{preferences.locations.name}</span>
+                  <span className="font-medium text-foreground">{locationPref.name}</span>
                 </>
               )}
             </p>
           </Card>
         )}
 
-        {recommendations.length > 0 ? (
-          <MovieGrid movies={recommendations} />
+        {movies && movies.length > 0 ? (
+          <MovieGrid movies={movies} />
         ) : (
           <Card className="p-12 text-center">
             <Sparkles className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />

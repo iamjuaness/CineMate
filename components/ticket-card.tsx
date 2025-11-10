@@ -7,6 +7,9 @@ import Image from "next/image"
 import { Calendar, Clock, MapPin, TicketIcon, QrCode as QrCodeIcon, Download } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 import { useState } from "react"
+import { parseISO, format } from "date-fns"
+import { toZonedTime } from "date-fns-tz"
+import { es } from "date-fns/locale"
 import type { Ticket } from "@/lib/types"
 
 interface TicketCardProps {
@@ -18,6 +21,7 @@ interface TicketCardProps {
 
 export function TicketCard({ ticket, isPast }: TicketCardProps) {
   const [showQR, setShowQR] = useState(false)
+  const TIMEZONE = "America/Bogota"
 
   if (!ticket.showtimes?.movies || !ticket.showtimes?.locations) {
     return null
@@ -25,6 +29,10 @@ export function TicketCard({ ticket, isPast }: TicketCardProps) {
 
   const movie = ticket.showtimes.movies
   const location = ticket.showtimes.locations
+
+  // Parsear y convertir el datetime a hora de Colombia
+  const showtimeUTC = parseISO(ticket.showtimes.show_datetime)
+  const showtimeColombia = toZonedTime(showtimeUTC, TIMEZONE)
 
   // URL para validación del ticket
   const validationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://cinemateuq.vercel.app'}/validar-ticket/${ticket.qr_code}`
@@ -96,17 +104,15 @@ export function TicketCard({ ticket, isPast }: TicketCardProps) {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span>
-                  {new Date(ticket.showtimes.show_date).toLocaleDateString("es-ES", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
+                <span className="capitalize">
+                  {format(showtimeColombia, "d 'de' MMM, yyyy", {
+                    locale: es,
                   })}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
-                <span>{ticket.showtimes.show_time.substring(0, 5)}</span>
+                <span>{format(showtimeColombia, "HH:mm")}</span>
               </div>
             </div>
           </div>
@@ -137,7 +143,7 @@ export function TicketCard({ ticket, isPast }: TicketCardProps) {
 
           {/* QR Code Display */}
           {showQR && !isPast && ticket.qr_code && (
-            <div className="flex flex-col items-center gap-3 rounded-lg border bg-white p-4">
+            <div className="flex flex-col items-center gap-3 rounded-lg border bg-white p-4 dark:bg-slate-950">
               <QRCodeSVG
                 id={`qr-${ticket.id}`}
                 value={validationUrl}

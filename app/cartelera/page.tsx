@@ -33,8 +33,7 @@ export default async function CarteleraPage({
       showtimes!inner(
         id,
         location_id,
-        show_date,
-        show_time,
+        show_datetime,
         available_seats,
         price,
         locations(id, name, city)
@@ -42,7 +41,7 @@ export default async function CarteleraPage({
     `,
     )
     .eq("in_theaters", true)
-    .gte("showtimes.show_date", new Date().toISOString().split("T")[0])
+    .gte("showtimes.show_datetime", new Date().toISOString())
 
   // Filtrar por ubicación si está seleccionada
   if (selectedLocationId) {

@@ -19,13 +19,14 @@ function EmailConfirmadoContent() {
   })
   const [mounted, setMounted] = useState(false)
 
-  // Verificar si hay error
   const hasError = searchParams.get('error') === 'verification_failed'
 
+  // Marcar como montado
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  // Obtener tamaño de ventana
   useEffect(() => {
     if (!mounted) return
 
@@ -41,18 +42,12 @@ function EmailConfirmadoContent() {
     return () => window.removeEventListener("resize", handleResize)
   }, [mounted])
 
+  // Countdown y redirección - CORREGIDO
   useEffect(() => {
     if (!mounted || hasError) return
 
     const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer)
-          router.push("/auth/login")
-          return 0
-        }
-        return prev - 1
-      })
+      setCountdown((prev) => prev - 1)
     }, 1000)
 
     const confettiTimer = setTimeout(() => {
@@ -63,7 +58,14 @@ function EmailConfirmadoContent() {
       clearInterval(timer)
       clearTimeout(confettiTimer)
     }
-  }, [router, mounted, hasError])
+  }, [mounted, hasError])
+
+  // Efecto separado para la redirección - NUEVO
+  useEffect(() => {
+    if (countdown <= 0 && mounted && !hasError) {
+      router.push("/auth/login")
+    }
+  }, [countdown, mounted, hasError, router])
 
   if (!mounted) {
     return null
@@ -83,7 +85,7 @@ function EmailConfirmadoContent() {
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <p className="text-center text-sm text-muted-foreground">
-                El enlace puede haber expirado o ya fue usado. Por favor, intenta registrarte nuevamente.
+                El enlace puede haber expirado o ya fue usado.
               </p>
               <Button onClick={() => router.push("/auth/registro")} className="w-full">
                 Volver a Registro
@@ -178,7 +180,7 @@ function EmailConfirmadoContent() {
                     transition={{ duration: 0.3 }}
                     className="font-bold tabular-nums"
                   >
-                    {countdown}
+                    {countdown > 0 ? countdown : 0}
                   </motion.span>{" "}
                   segundos...
                 </p>
@@ -200,7 +202,14 @@ function EmailConfirmadoContent() {
 
 export default function EmailConfirmadoPage() {
   return (
-    <Suspense fallback={<div>Cargando...</div>}>
+    <Suspense fallback={
+      <div className="flex min-h-svh w-full items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
+          <p className="text-sm text-muted-foreground">Cargando...</p>
+        </div>
+      </div>
+    }>
       <EmailConfirmadoContent />
     </Suspense>
   )

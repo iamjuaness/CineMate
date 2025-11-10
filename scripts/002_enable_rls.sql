@@ -39,6 +39,13 @@ create policy "Cualquiera puede ver funciones"
   to authenticated
   using (true);
 
+-- Permitir updates solo a authenticated
+CREATE POLICY "Allow authenticated update"
+ON public.showtimes
+FOR UPDATE
+TO authenticated
+USING (true);
+
 -- Tickets (privado - solo el usuario propietario)
 alter table public.tickets enable row level security;
 
