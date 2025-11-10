@@ -1,7 +1,12 @@
+"use client"
+
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import Image from "next/image"
-import { Calendar, Clock, MapPin, TicketIcon, QrCode } from "lucide-react"
+import { Calendar, Clock, MapPin, TicketIcon, QrCode as QrCodeIcon, Download } from "lucide-react"
+import { QRCodeSVG } from "qrcode.react"
+import { useState } from "react"
 import type { Ticket } from "@/lib/types"
 
 interface TicketCardProps {
@@ -12,12 +17,41 @@ interface TicketCardProps {
 }
 
 export function TicketCard({ ticket, isPast }: TicketCardProps) {
+  const [showQR, setShowQR] = useState(false)
+
   if (!ticket.showtimes?.movies || !ticket.showtimes?.locations) {
     return null
   }
 
   const movie = ticket.showtimes.movies
   const location = ticket.showtimes.locations
+
+  // URL para validación del ticket
+  const validationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://cinemate.vercel.app'}/validar-ticket/${ticket.qr_code}`
+
+  const downloadQR = () => {
+    const svg = document.getElementById(`qr-${ticket.id}`)
+    if (!svg) return
+
+    const svgData = new XMLSerializer().serializeToString(svg)
+    const canvas = document.createElement("canvas")
+    const ctx = canvas.getContext("2d")
+    const img = new window.Image()
+
+    img.onload = () => {
+      canvas.width = img.width
+      canvas.height = img.height
+      ctx?.drawImage(img, 0, 0)
+      const pngFile = canvas.toDataURL("image/png")
+
+      const downloadLink = document.createElement("a")
+      downloadLink.download = `ticket-${ticket.qr_code}.png`
+      downloadLink.href = pngFile
+      downloadLink.click()
+    }
+
+    img.src = "data:image/svg+xml;base64," + btoa(svgData)
+  }
 
   return (
     <Card className={`overflow-hidden ${isPast ? "opacity-60" : ""}`}>
@@ -87,13 +121,46 @@ export function TicketCard({ ticket, isPast }: TicketCardProps) {
               </div>
               <div className="font-semibold">Total: ${ticket.total_amount.toLocaleString()}</div>
             </div>
+            
             {!isPast && ticket.qr_code && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <QrCode className="h-4 w-4" />
-                <span className="font-mono">{ticket.qr_code}</span>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowQR(!showQR)}
+                className="gap-2"
+              >
+                <QrCodeIcon className="h-4 w-4" />
+                {showQR ? "Ocultar QR" : "Mostrar QR"}
+              </Button>
             )}
           </div>
+
+          {/* QR Code Display */}
+          {showQR && !isPast && ticket.qr_code && (
+            <div className="flex flex-col items-center gap-3 rounded-lg border bg-white p-4">
+              <QRCodeSVG
+                id={`qr-${ticket.id}`}
+                value={validationUrl}
+                size={200}
+                level="H"
+                includeMargin={true}
+                bgColor="#ffffff"
+                fgColor="#000000"
+              />
+              <p className="text-center text-xs text-muted-foreground font-mono">
+                {ticket.qr_code}
+              </p>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={downloadQR}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Descargar QR
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </Card>

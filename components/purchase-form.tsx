@@ -29,18 +29,25 @@ export function PurchaseForm({ showtimeId, price, availableSeats, userId }: Purc
     setError(null)
 
     try {
-      // Generar código QR simple (en producción usar una librería)
-      const qrCode = `CINEMATE-${showtimeId}-${Date.now()}`
+      // Generar código QR único y seguro
+      const timestamp = Date.now()
+      const randomString = Math.random().toString(36).substring(2, 15)
+      const ticketId = `${timestamp}-${randomString}`
+      const qrCode = `CINEMATE-${ticketId}`
 
       // Crear el ticket
-      const { error: ticketError } = await supabase.from("tickets").insert({
-        user_id: userId,
-        showtime_id: showtimeId,
-        seats_count: seatsCount,
-        total_amount: totalAmount,
-        qr_code: qrCode,
-        status: "active",
-      })
+      const { data: ticketData, error: ticketError } = await supabase
+        .from("tickets")
+        .insert({
+          user_id: userId,
+          showtime_id: showtimeId,
+          seats_count: seatsCount,
+          total_amount: totalAmount,
+          qr_code: qrCode,
+          status: "active",
+        })
+        .select()
+        .single()
 
       if (ticketError) throw ticketError
 
@@ -66,7 +73,7 @@ export function PurchaseForm({ showtimeId, price, availableSeats, userId }: Purc
       router.push("/mis-boletos")
       router.refresh()
     } catch (err) {
-      console.error("[v0] Error al comprar boletos:", err)
+      console.error("[CineMate] Error al comprar boletos:", err)
       setError(err instanceof Error ? err.message : "Error al procesar la compra")
     } finally {
       setIsLoading(false)

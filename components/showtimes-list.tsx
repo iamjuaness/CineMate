@@ -11,12 +11,10 @@ interface ShowtimesListProps {
 export function ShowtimesList({ showtimes }: ShowtimesListProps) {
   const router = useRouter();
 
-  // Fecha y hora actuales EN COLOMBIA
+  // Obtener fecha y hora actual en Colombia
   const nowColombia = new Date(
     new Date().toLocaleString("en-US", { timeZone: "America/Bogota" })
   );
-
-  const todayColombia = nowColombia.toISOString().slice(0, 10);
 
   // Agrupar por fecha
   const showtimesByDate = showtimes.reduce((acc: any, showtime: Showtime) => {
@@ -31,88 +29,88 @@ export function ShowtimesList({ showtimes }: ShowtimesListProps) {
   return (
     <div className="space-y-3">
       {(Object.entries(showtimesByDate) as [string, Showtime[]][]).map(
-        ([date, times]) => (
-          <div key={date}>
-            <p className="mb-2 text-sm font-medium">
-              {/* Fecha en zona horaria de Colombia, sumando 1 día */}
-              {(() => {
-                const dateObj = new Date(date);
-                dateObj.setDate(dateObj.getDate() + 1);
-                return dateObj.toLocaleDateString("es-ES", {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                  timeZone: "America/Bogota",
-                });
-              })()}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {times.map((showtime: Showtime) => {
-                // Combina la fecha y hora de la función
-                // El formato: "YYYY-MM-DDTHH:mm:ss" en UTC
-                const showtimeDateUTC = new Date(
-                  `${showtime.show_date}T${showtime.show_time}`
-                );
+        ([date, times]) => {
+          // Parsear la fecha correctamente sin conversión UTC
+          // YYYY-MM-DD → parsearlo como fecha local de Colombia
+          const [year, month, day] = date.split("-").map(Number);
+          const dateObj = new Date(year, month - 1, day); // Mes es 0-indexed
 
-                // Convierte esa fecha/hora a horario de Colombia
-                const showtimeDateColombia = new Date(
-                  showtimeDateUTC.toLocaleString("en-US", {
-                    timeZone: "America/Bogota",
-                  })
-                );
+          const formattedDate = dateObj.toLocaleDateString("es-CO", {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+          });
 
-                // Verifica si está en el pasado
-                const isToday =
-                  showtimeDateColombia.toISOString().slice(0, 10) ===
-                  todayColombia;
-                const isPast = showtimeDateColombia < nowColombia;
-                const isSoldOut = showtime.available_seats === 0;
+          return (
+            <div key={date}>
+              <p className="mb-2 text-sm font-medium capitalize">
+                {formattedDate}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {times.map((showtime: Showtime) => {
+                  // Crear fecha/hora completa en Colombia
+                  // YYYY-MM-DD + HH:mm:ss → como fecha local
+                  const [showYear, showMonth, showDay] = showtime.show_date
+                    .split("-")
+                    .map(Number);
+                  const [hours, minutes] = showtime.show_time
+                    .split(":")
+                    .map(Number);
 
-                // Formatea la hora para mostrar solo HH:mm en horario colombiano
-                const formattedHour = showtimeDateColombia.toLocaleTimeString(
-                  "es-CO",
-                  {
+                  const showtimeDate = new Date(
+                    showYear,
+                    showMonth - 1,
+                    showDay,
+                    hours,
+                    minutes
+                  );
+
+                  // Verificar si está en el pasado
+                  const isPast = showtimeDate < nowColombia;
+                  const isSoldOut = showtime.available_seats === 0;
+
+                  // Formatear hora
+                  const formattedHour = showtimeDate.toLocaleTimeString("es-CO", {
                     hour: "2-digit",
                     minute: "2-digit",
                     hour12: false,
-                    timeZone: "America/Bogota",
-                  }
-                );
+                  });
 
-                return (
-                  <Button
-                    key={showtime.id}
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      router.push(`/comprar-boleto/${showtime.id}`)
-                    }
-                    disabled={isPast || isSoldOut}
-                    className={
-                      isPast
-                        ? "opacity-60 cursor-not-allowed line-through pointer-events-none"
-                        : isSoldOut
-                        ? "opacity-60 cursor-not-allowed"
-                        : "btn-cine font-semibold"
-                    }
-                    title={
-                      isPast
-                        ? "Este horario ya ha pasado"
-                        : isSoldOut
-                        ? "Función agotada"
-                        : "Comprar entrada"
-                    }
-                  >
-                    {formattedHour}
-                    <span className="ml-2 text-xs">
-                      ${showtime.price.toLocaleString()}
-                    </span>
-                  </Button>
-                );
-              })}
+                  return (
+                    <Button
+                      key={showtime.id}
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        router.push(`/comprar-boleto/${showtime.id}`)
+                      }
+                      disabled={isPast || isSoldOut}
+                      className={
+                        isPast
+                          ? "opacity-60 cursor-not-allowed line-through pointer-events-none"
+                          : isSoldOut
+                          ? "opacity-60 cursor-not-allowed"
+                          : "btn-cine font-semibold"
+                      }
+                      title={
+                        isPast
+                          ? "Este horario ya ha pasado"
+                          : isSoldOut
+                          ? "Función agotada"
+                          : "Comprar entrada"
+                      }
+                    >
+                      {formattedHour}
+                      <span className="ml-2 text-xs">
+                        ${showtime.price.toLocaleString()}
+                      </span>
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )
+          );
+        }
       )}
     </div>
   );
