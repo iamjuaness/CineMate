@@ -1,15 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import Confetti from "react-confetti"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { CheckCircle } from "lucide-react"
+import { CheckCircle, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-export default function EmailConfirmadoPage() {
+function EmailConfirmadoContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [countdown, setCountdown] = useState(5)
   const [showConfetti, setShowConfetti] = useState(true)
   const [windowSize, setWindowSize] = useState({
@@ -18,12 +19,13 @@ export default function EmailConfirmadoPage() {
   })
   const [mounted, setMounted] = useState(false)
 
-  // Marcar como montado
+  // Verificar si hay error
+  const hasError = searchParams.get('error') === 'verification_failed'
+
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Obtener tamaño de ventana para el confetti
   useEffect(() => {
     if (!mounted) return
 
@@ -39,9 +41,8 @@ export default function EmailConfirmadoPage() {
     return () => window.removeEventListener("resize", handleResize)
   }, [mounted])
 
-  // Countdown y redirección
   useEffect(() => {
-    if (!mounted) return
+    if (!mounted || hasError) return
 
     const timer = setInterval(() => {
       setCountdown((prev) => {
@@ -54,7 +55,6 @@ export default function EmailConfirmadoPage() {
       })
     }, 1000)
 
-    // Detener confetti después de 5 segundos
     const confettiTimer = setTimeout(() => {
       setShowConfetti(false)
     }, 5000)
@@ -63,11 +63,36 @@ export default function EmailConfirmadoPage() {
       clearInterval(timer)
       clearTimeout(confettiTimer)
     }
-  }, [router, mounted])
+  }, [router, mounted, hasError])
 
-  // No renderizar hasta que esté montado (evita hydration mismatch)
   if (!mounted) {
     return null
+  }
+
+  if (hasError) {
+    return (
+      <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+        <div className="w-full max-w-sm">
+          <Card>
+            <CardHeader className="text-center">
+              <XCircle className="mx-auto mb-4 h-20 w-20 text-red-500" />
+              <CardTitle className="text-2xl">Error de Verificación</CardTitle>
+              <CardDescription className="mt-2">
+                No se pudo verificar tu cuenta
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <p className="text-center text-sm text-muted-foreground">
+                El enlace puede haber expirado o ya fue usado. Por favor, intenta registrarte nuevamente.
+              </p>
+              <Button onClick={() => router.push("/auth/registro")} className="w-full">
+                Volver a Registro
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -151,7 +176,7 @@ export default function EmailConfirmadoPage() {
                     initial={{ scale: 1.5, color: "#16a34a" }}
                     animate={{ scale: 1, color: "#6b7280" }}
                     transition={{ duration: 0.3 }}
-                    className="font-bold"
+                    className="font-bold tabular-nums"
                   >
                     {countdown}
                   </motion.span>{" "}
@@ -170,5 +195,13 @@ export default function EmailConfirmadoPage() {
         </motion.div>
       </div>
     </div>
+  )
+}
+
+export default function EmailConfirmadoPage() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <EmailConfirmadoContent />
+    </Suspense>
   )
 }

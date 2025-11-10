@@ -1,56 +1,69 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { createClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function RegistroPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [repeatPassword, setRepeatPassword] = useState("")
-  const [fullName, setFullName] = useState("")
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [repeatPassword, setRepeatPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const supabase = createClient()
-    setIsLoading(true)
-    setError(null)
+    e.preventDefault();
+    const supabase = createClient();
+    setIsLoading(true);
+    setError(null);
 
     if (password !== repeatPassword) {
-      setError("Las contraseñas no coinciden")
-      setIsLoading(false)
-      return
+      setError("Las contraseñas no coinciden");
+      setIsLoading(false);
+      return;
     }
 
     try {
+      // La URL de callback - NO la página final
+      const siteUrl =
+        process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+      const callbackUrl = `${siteUrl}/auth/callback`;
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/email-confirmado`,
+          emailRedirectTo: callbackUrl, // Apunta al callback
           data: {
             full_name: fullName,
           },
         },
-      })
-      if (error) throw error
-      router.push("/auth/registro-exitoso")
+      });
+
+      if (error) throw error;
+
+      router.push("/auth/registro-exitoso");
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Ocurrió un error")
+      setError(error instanceof Error ? error.message : "Ocurrió un error");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
@@ -58,12 +71,16 @@ export default function RegistroPage() {
         <div className="flex flex-col gap-6">
           <div className="flex flex-col items-center gap-2 text-center">
             <h1 className="text-3xl font-bold">CineMate</h1>
-            <p className="text-sm text-muted-foreground">Tu experiencia cinematográfica móvil</p>
+            <p className="text-sm text-muted-foreground">
+              Tu experiencia cinematográfica móvil
+            </p>
           </div>
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl">Crear Cuenta</CardTitle>
-              <CardDescription>Regístrate para comenzar a disfrutar de CineMate</CardDescription>
+              <CardDescription>
+                Regístrate para comenzar a disfrutar de CineMate
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSignUp}>
@@ -117,7 +134,10 @@ export default function RegistroPage() {
                 </div>
                 <div className="mt-4 text-center text-sm">
                   ¿Ya tienes una cuenta?{" "}
-                  <Link href="/auth/login" className="underline underline-offset-4">
+                  <Link
+                    href="/auth/login"
+                    className="underline underline-offset-4"
+                  >
                     Inicia sesión
                   </Link>
                 </div>
@@ -127,5 +147,5 @@ export default function RegistroPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

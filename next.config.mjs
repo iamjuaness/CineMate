@@ -3,9 +3,23 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  reactStrictMode: true,
   images: {
-    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "image.tmdb.org",
+      },
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+      },
+    ],
   },
-}
+  // Optimizar fuentes
+  experimental: {
+    optimizePackageImports: ["framer-motion", "react-confetti", "lucide-react"],
+  },
+};
 
-export default nextConfig
+export default nextConfig;
